@@ -26,6 +26,9 @@ namespace WingtipToys.BusinessLogicLayer
                 .ForMember(m => m.ImagePath, map => map.MapFrom(p => p.Product.ImagePath))
                 .ForMember(m => m.UnitPrice, map => map.MapFrom(p => p.Product.UnitPrice));
             CreateMap<OrderDetailDto, OrderDetail>();
+
+
+            CreateMap<Category, CategoryDto>();
         }
     }
 }
