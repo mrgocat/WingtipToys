@@ -15,6 +15,9 @@ using WingtipToys.DataAccessLayer;
 using AutoMapper;
 using WingtipToys.BusinessLogicLayer.Services;
 using WingtipToys.BusinessLogicLayer;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace WingtipToys.WebApi
 {
@@ -30,18 +33,36 @@ namespace WingtipToys.WebApi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+
+            var jwtOptions = new JwtOptions();
+            Configuration.GetSection("jwt").Bind(jwtOptions);
+            services.AddSingleton(jwtOptions);
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
+            {
+                options.RequireHttpsMetadata = false;
+                options.SaveToken = true;
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidIssuer = jwtOptions.JwtIssuer,
+                    ValidAudience = jwtOptions.JwtAudience,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.JwtKey))
+                };
+            });
+
             services.AddDbContext<WingtipContext>(
                 options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
-            //services.AddAutoMapper(this.GetType().Assembly);
-            services.AddAutoMapper(typeof(WingtipProfile));
+            services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+         //   services.AddAutoMapper(typeof(WingtipProfile));
             /*var config = new MapperConfiguration(cfg =>
             {
                 cfg.AddProfile(new WingtipProfile());
             });*/
 
-            services.AddTransient<IOrderService, OrderService>();
-            services.AddTransient<ICartService, CartService>();
-            services.AddTransient<IProductService, ProductService>();
+            services.AddScoped<IOrderService, OrderService>();
+            services.AddScoped<ICartService, CartService>();
+            services.AddScoped<IProductService, ProductService>();
             services.AddControllers();
             services.AddSwaggerGen();
 
@@ -68,6 +89,8 @@ namespace WingtipToys.WebApi
             });
 
             app.UseHttpsRedirection();
+
+            app.UseAuthentication();
 
             app.UseRouting();
 

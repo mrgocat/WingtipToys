@@ -11,19 +11,19 @@ using WingtipToys.BusinessLogicLayer.Services;
 
 namespace WingtipToys.WebApi.Controllers
 {
-    [Route("api/v1/[controller]")]
+    [Route("api/v2/order")]
     [ApiController]
     [Authorize]
-    public class OrderController : ControllerBase
+    public class OrderAsyncController : ControllerBase
     {
         private readonly IOrderService _orderService;
 
-        public OrderController(IOrderService orderService)
+        public OrderAsyncController(IOrderService orderService)
         {
             _orderService = orderService;
         }
         [HttpGet]
-        public ActionResult Get()
+        public async Task<ActionResult> GetAsync()
         {
             string userId = getUserId();
             if (userId == null)
@@ -32,10 +32,10 @@ namespace WingtipToys.WebApi.Controllers
             }
 
             //string userName = null;
-            return Ok(_orderService.GetOrderList(userId));
+            return Ok(await _orderService.GetOrderListAsync(userId));
         }
         [HttpGet("{orderId}")]
-        public ActionResult Get(int orderId)
+        public async Task<ActionResult> GetAsync(int orderId)
         {
             string userId = getUserId();
             if (userId == null)
@@ -43,7 +43,7 @@ namespace WingtipToys.WebApi.Controllers
                 return Unauthorized("Authentication Information required.");
             }
 
-            OrderDto dto = _orderService.Get(orderId);
+            OrderDto dto = await _orderService.GetAsync(orderId);
             if(dto == null)
             {
                 return NotFound();
@@ -55,7 +55,7 @@ namespace WingtipToys.WebApi.Controllers
             return Ok(dto);
         }
         [HttpPost]
-        public ActionResult Add([FromBody]OrderDto dto)
+        public async Task<ActionResult> AddAsync([FromBody]OrderDto dto)
         {
             if (!ModelState.IsValid)
             {
@@ -72,7 +72,7 @@ namespace WingtipToys.WebApi.Controllers
             int orderId = 0;
             try
             {
-                orderId = _orderService.Add(dto);
+                orderId = await _orderService.AddAsync(dto);
             }catch(KeyNotFoundException e)
             {
                 return NotFound(e.Message);
@@ -80,13 +80,13 @@ namespace WingtipToys.WebApi.Controllers
             return Created($"api/vi/order/{orderId}", orderId);
         }
         [HttpDelete("{orderId}")]
-        public ActionResult Delete(int orderId)
+        public async Task<ActionResult> DeleteAsync(int orderId)
         {
-            _orderService.Delete(orderId);
+            await _orderService.DeleteAsync(orderId);
             return NoContent();
         }
 
-        private String getUserId()
+        private string getUserId()
         {
             var claimId = this.User.FindFirst(c => c.Type == ClaimTypes.NameIdentifier);
             if (claimId == null)

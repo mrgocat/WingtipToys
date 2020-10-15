@@ -3,15 +3,16 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
 using WingtipToys.DataAccessLayer;
 
-namespace WingtipToys.UnitTest
+namespace WingtipToys.IntegrationTest
 {
     [TestClass]
-    public class DataAccessLayerTest
+    public class DataAccessLayerTests
     {
         private WingtipContext _context;
         [TestInitialize]
         public void Setup()
         {
+            Constants.LoadConnectionString();
             //    DbContextOptions<WingtipContext> options;
             var builder = new DbContextOptionsBuilder<WingtipContext>();
             builder.UseSqlServer(Constants.ConnectionString);
@@ -36,6 +37,7 @@ namespace WingtipToys.UnitTest
             Assert.IsNotNull(categories);
             var orders = _context.Orders.Include(o => o.OrderDetails).ToList();
             Assert.IsNotNull(orders);
+            
             foreach (var order in orders)
             {
                 Assert.IsNotNull(order.OrderDetails);

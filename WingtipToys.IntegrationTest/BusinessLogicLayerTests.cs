@@ -1,25 +1,34 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Text;
 using WingtipToys.BusinessLogicLayer;
 using WingtipToys.BusinessLogicLayer.Models;
 using WingtipToys.BusinessLogicLayer.Services;
 using WingtipToys.DataAccessLayer;
 
-namespace WingtipToys.UnitTest
+namespace WingtipToys.IntegrationTest
 {
     [TestClass]
-    public class BusinessLogicLayerTest
+    public class BusinessLogicLayerTests
     {
+        public static TestContext _testContect;
         private WingtipContext _context;
         private IMapper _mapper;
+        [ClassInitialize]
+        public static void initClass(TestContext context)
+        {
+            _testContect = context;
+        }
+
         [TestInitialize]
         public void Setup()
         {
+
             //    DbContextOptions<WingtipContext> options;
+            Constants.LoadConnectionString();
             var builder = new DbContextOptionsBuilder<WingtipContext>();
             builder.UseSqlServer(Constants.ConnectionString);
             _context = new WingtipContext(builder.Options);
@@ -30,6 +39,17 @@ namespace WingtipToys.UnitTest
             });
             _mapper = config.CreateMapper();
         }
+/*        [TestMethod]
+        public void PrudoctServiceGetProductLIst_Test()
+        {
+            using (ShimsContext.Create())
+            {
+                //     WingtipToys.DataAccessLayer.Fakes.ShimProduct.
+                // Arrange 
+                //System.
+                //System.
+            }
+        }*/
         [TestMethod]
         public void ProductServiceTest()
         {
@@ -43,6 +63,15 @@ namespace WingtipToys.UnitTest
                 Assert.IsNotNull(product);
                 Assert.IsNotNull(product.CategoryName);
             }
+            _testContect.WriteLine(_testContect.FullyQualifiedTestClassName);
+            _testContect.WriteLine(_testContect.TestName);
+
+
+        }
+        [TestCleanup]
+        public void CleanUp()
+        {
+            _testContect.WriteLine(_testContect.CurrentTestOutcome.ToString());
         }
         [TestMethod]
         public void CartServiceTest()
@@ -100,7 +129,9 @@ namespace WingtipToys.UnitTest
 
             chk = 0;
             cartList = cartService.Get(cartId);
-            foreach (CartItemDto item in cartList)
+            CollectionAssert.Contains(cartList, cartDto1);
+            CollectionAssert.Contains(cartList, cartDto2);
+            /*foreach (CartItemDto item in cartList)
             {
                 if (item.ProductId == cartDto1.ProductId)
                 {
@@ -113,7 +144,7 @@ namespace WingtipToys.UnitTest
                     chk++;
                 }
             }
-            Assert.IsTrue(chk == 2);
+            Assert.IsTrue(chk == 2);*/
 
             cartService.Delete(cartId, cartDto1.Id);
             cartService.Delete(cartId, cartDto2.Id);
@@ -184,16 +215,16 @@ namespace WingtipToys.UnitTest
             Assert.AreEqual(dto.Email, tmpOrder.Email);
             Assert.AreEqual(dto.Total, tmpOrder.Total);
             Assert.IsNotNull(tmpOrder.OrderDetails);
-            
+
             Assert.IsTrue(dto.OrderDetails.Count == tmpOrder.OrderDetails.Count);
 
             var orderList = orderService.GetOrderList(dto.Username);
             Assert.IsTrue(orderList.Count > 0);
             int chk = 0;
-            foreach(OrderDto o in orderList)
+            foreach (OrderDto o in orderList)
             {
                 Assert.AreEqual(dto.Username, o.Username);
-                if(o.Id == orderId)
+                if (o.Id == orderId)
                 {
                     chk++;
                 }
@@ -204,5 +235,6 @@ namespace WingtipToys.UnitTest
             tmpOrder = orderService.Get(orderId);
             Assert.IsNull(tmpOrder);
         }
+
     }
 }
